@@ -5,10 +5,21 @@ const playBtn = document.getElementById('play-btn');
 const slider = document.getElementById('time-slider');
 const currentTimeDisplay = document.getElementById('current-time');
 
+
+
+// def time_convert_reverse(x, min=1726617600):
+//     return pd.to_datetime(x + min, unit='s')
+
+function time_convert_reverse(x, min=1726617600) {
+    return new Date((x + min) * 1000);
+}
+
+
 // 初始化地图和视图
 const initialViewState = {
-    latitude: 40.715196585765504,
-    longitude: -73.97840470334431,
+    // 香港中心
+    latitude:  22.3193039,
+    longitude: 114.1693611,
     zoom: 11.9,
     minZoom: 2,
     maxZoom: 15,
@@ -21,7 +32,7 @@ const BLUE = [23, 184, 190];
 const RED = [253, 128, 93];
 
 // 数据路径
-const DATA_URL = 'data/trips.json';
+const DATA_URL = 'data/trajectory.json';
 
 // 初始化时间
 let currentTime = 0;
@@ -30,7 +41,7 @@ let currentTime = 0;
 let animationId = null;
 const step = 1;
 const intervalMS = 20;
-const loopLength = 2500;
+const loopLength = 84928;
 let isPlaying = false;
 
 // 加载数据
@@ -59,7 +70,7 @@ function createTripsLayer(data, currentTime) {
 function updateTime(newTime) {
     currentTime = newTime;
     slider.value = currentTime;
-    currentTimeDisplay.textContent = `Current Time: ${currentTime}`;
+    currentTimeDisplay.textContent = `Current Time: ${time_convert_reverse(currentTime).toLocaleString()}`;
 
     // 更新图层
     const newLayer = createTripsLayer(data, currentTime);
