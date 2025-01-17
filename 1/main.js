@@ -14,6 +14,7 @@ function time_convert_reverse(x, min=1726617600) {
     return new Date((x + min) * 1000);
 }
 
+// console.log(time_convert_reverse(0).toUTCString());
 
 // 初始化地图和视图
 const initialViewState = {
@@ -27,9 +28,7 @@ const initialViewState = {
     bearing: 0,
 };
 
-// 颜色定义
-const BLUE = [23, 184, 190];
-const RED = [253, 128, 93];
+
 
 // 数据路径
 const DATA_URL = 'data/trajectory.json';
@@ -70,11 +69,25 @@ function createTripsLayer(data, currentTime) {
 function updateTime(newTime) {
     currentTime = newTime;
     slider.value = currentTime;
-    currentTimeDisplay.textContent = `Current Time: ${time_convert_reverse(currentTime).toLocaleString()}`;
+    currentTimeDisplay.textContent = `Current Time: ${time_convert_reverse(currentTime).toUTCString()}`; // fix: 调整为 UTC 时间即 Python 默认时间
 
     // 更新图层
     const newLayer = createTripsLayer(data, currentTime);
     deckgl.setProps({ layers: [newLayer] });
+}
+
+// 节流函数
+function throttle(fn, interval) {
+    let lastCallTime = 0;
+
+    return function (...args) {
+        const now = Date.now();
+
+        if (now - lastCallTime >= interval) {
+            fn(...args);
+            lastCallTime = now;
+        }
+    };
 }
 
 // 动画循环
@@ -82,8 +95,10 @@ function animate() {
     if (!isPlaying) return;
 
     currentTime = (currentTime + step) % loopLength;
-    updateTime(currentTime);
+    // updateTime(currentTime);
+    throttle(updateTime, 1000)(currentTime); // 限制更新频率
 
+    // 递归调用
     animationId = requestAnimationFrame(animate);
 }
 
@@ -111,7 +126,10 @@ async function init() {
 
     // 初始化 DeckGL
     deckgl = new DeckGL({
-        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        // mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', // 白色地图
+        // https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json
+        mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json', // 黑色地图
+
         controller: true,
         initialViewState,
         layers: [layer],
@@ -131,4 +149,40 @@ async function init() {
 }
 
 // 启动
-init();
+document.addEventListener('DOMContentLoaded', init);
+
+// 颜色定义
+const BLUE = [23, 184, 190];
+const RED = [253, 128, 93];
+
+const legend = document.getElementById('legend');
+
+// GMB : 0 RED
+// non-GMB : 1 BLUE
+
+
+// 创建 legend 条目
+function createLegendItem(color, label) {
+    // 创建 legend 条目
+    const legendItem = document.createElement('div');
+    legendItem.classList.add('legend-item');
+
+    // 创建颜色块
+    const colorBlock = document.createElement('div');
+    colorBlock.classList.add('legend-color');
+    colorBlock.style.backgroundColor = `rgb(${color.join(',')})`;
+
+    // 创建标签
+    const labelText = document.createElement('span');
+    labelText.innerText = label;
+
+    // 添加颜色块和标签到 legend 条目
+    legendItem.appendChild(colorBlock);
+    legendItem.appendChild(labelText);
+
+    return legendItem;
+}
+
+// 添加 GMB 和非 GMB 条目到 legend
+legend.appendChild(createLegendItem(RED, 'GMB'));
+legend.appendChild(createLegendItem(BLUE, 'Non-GMB'));

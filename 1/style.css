@@ -2,6 +2,8 @@ body, html {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
+    background-color: black;
+    color: white;
 }
 #map {
     width: 100%;
@@ -10,11 +12,38 @@ body, html {
 }
 #toolbar {
     padding: 10px;
-    background-color: #f0f0f0;
+    border: 1px solid #84808085;
 }
 
 #time-slider {
     width: 50%;
     margin-top: 10px;
+}
 
+/* style.css */
+
+#legend {
+    position: fixed;
+    bottom: 10px; /* 距离页面底部10px */
+    left: 10px;   /* 距离页面左边10px */
+    background-color: rgba(56, 52, 52, 0.808);
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 50%;
 }
