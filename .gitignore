@@ -1,7 +1,6 @@
-1/data/matched_routes_all/matched_routes_all.cpg
-1/data/matched_routes_all/matched_routes_all.dbf
-1/data/matched_routes_all/matched_routes_all.prj
-1/data/matched_routes_all/matched_routes_all.shp
-1/data/matched_routes_all/matched_routes_all.shx
+.vscode/
+.venv/
+
+1/data/matched_routes_all/
 1/data/HK_all_vs_parking_nodeid.csv
 1/data/matched_routes_all.7z
