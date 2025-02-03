@@ -3,10 +3,13 @@ import json
 import pandas as pd
 from shapely.geometry import LineString
 import tqdm
+import numpy as np
 
 DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(DIR, '..', 'data')
 SAVE_PATH5 = os.path.join(DATA_DIR, 'trajectory3.json') 
+
+SAVE_PATH = os.path.join(DATA_DIR, 'trajectory.json') 
 
 # 加载JSON文件并将其转换为DataFrame
 def load_JSON_as_df(file_path):
@@ -62,10 +65,37 @@ def simplify_trajectory(trajectory, tolerance=0.0001):
     
     return pd.DataFrame(simplified_data)
 
+def simplify_trajectory2(trajectory, value=2):
+    simplified_data = []
+
+    for index, row in tqdm.tqdm(trajectory.iterrows(), total=len(trajectory)):
+        vendor = row['vendor']
+        path = row['path']
+        timestamps = row['timestamps']
+        
+        # 使用numpy的array
+        path = np.array(path)
+        timestamps = np.array(timestamps)
+        
+        # 每隔value个点取一个点
+        simplified_path = path[::value]
+        simplified_timestamps = timestamps[::value]
+        
+        # 将结果添加到简化数据中
+        simplified_data.append({
+            'vendor': vendor,
+            'path': simplified_path,
+            'timestamps': simplified_timestamps
+        })
+    
+    return pd.DataFrame(simplified_data)
+
+
+
 # print(SAVE_PATH5)
 
 if __name__ == '__main__':
     trajectory = load_JSON_as_df(SAVE_PATH5)
-    simplified_trajectory = simplify_trajectory(trajectory, tolerance=0.0001)
+    simplified_trajectory = simplify_trajectory2(trajectory, value=5)
     # 保存简化后的轨迹数据
-    simplified_trajectory.to_json(SAVE_PATH5, orient='records')
+    simplified_trajectory.to_json(SAVE_PATH, orient='records')
