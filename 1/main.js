@@ -1,3 +1,48 @@
+// ==== Worker Start ====
+
+const worker = new Worker('worker.js');
+
+// 监听 Worker 返回的数据
+worker.onmessage = function(e) {
+  const { type, data, error } = e.data;
+
+  if (type === 'INIT_COMPLETE') {
+    console.log('数据加载完成，准备好提供服务');
+  } else if (type === 'ACTIVE_ROWS') {
+    console.log('活跃行数据：', data);
+  } else if (type === 'TRAJECTORY_DATA') {
+    // console.log('生成的轨迹数据：', data);
+    globe_data = data;
+  } else if (type === 'ERROR') {
+    console.error('数据加载出错：', error);
+  }
+};
+
+// 生成轨迹数据
+// function generateTrajectoryDataForRows(timestamp) {
+//     worker.postMessage({ type: 'GENERATE_TRAJECTORY', timestamp });
+// }
+
+// 使用异步函数改写
+async function generateTrajectoryDataForRows(timestamp) {
+    worker.postMessage({ type: 'GENERATE_TRAJECTORY', timestamp });
+    return new Promise((resolve, reject) => {
+        worker.onmessage = function(e) {
+            const { type, data, error } = e.data;
+
+            if (type === 'TRAJECTORY_DATA') {
+                resolve(data);
+            } else {
+                reject(error);
+            }
+        };
+    });
+}
+
+// ==== Worker End ====
+
+
+
 const { DeckGL, TripsLayer } = deck;
 
 // 获取播放按钮和滑动条
@@ -44,10 +89,10 @@ const loopLength = 84928;
 let isPlaying = false;
 
 // 加载数据
-async function loadData() {
-    const response = await fetch(DATA_URL);
-    return response.json();
-}
+// async function loadData() {
+//     const response = await fetch(DATA_URL);
+//     return response.json();
+// }
 
 // 创建 TripsLayer
 function createTripsLayer(data, currentTime) {
@@ -60,16 +105,18 @@ function createTripsLayer(data, currentTime) {
         opacity: 0.5,
         widthMinPixels: 3,
         rounded: true,
-        trailLength: 180,
+        trailLength: 80,
         currentTime,
     });
 }
 
 // 更新时间和图层
-function updateTime(newTime) {
+async function updateTime(newTime) {
     currentTime = newTime;
     slider.value = currentTime;
     currentTimeDisplay.textContent = `Current Time: ${time_convert_reverse(currentTime).toUTCString()}`; // fix: 调整为 UTC 时间即 Python 默认时间
+
+    data = await generateTrajectoryDataForRows(currentTime); // 使用 Worker 生成轨迹数据
 
     // 更新图层
     const newLayer = createTripsLayer(data, currentTime);
@@ -96,7 +143,7 @@ function animate() {
 
     currentTime = (currentTime + step) % loopLength;
     // updateTime(currentTime);
-    throttle(updateTime, 1000)(currentTime); // 限制更新频率
+    throttle(updateTime, 2000)(currentTime); // 限制更新频率
 
     // 递归调用
     animationId = requestAnimationFrame(animate);
@@ -119,7 +166,8 @@ function togglePlay() {
 let deckgl;
 let data;
 async function init() {
-    data = await loadData();
+    // data = await loadData();
+    data = await generateTrajectoryDataForRows(0); // 使用 Worker 生成轨迹数据
 
     // 创建初始图层
     const layer = createTripsLayer(data, currentTime);
